@@ -16,65 +16,22 @@
 3. Testing (Multiple Files, Names, Etc.) X
 4. Style Output PDF
 5. Comments X
+
+****
+1. utils folder -> outsource pdf functions and Message class
+2. create pdf_helper
+2a. write_left(pdf, msg) / write_right / title(pdf, text: str)
+
 '''
 
 import os
 import zipfile
 import json
-import collections
 import argparse
 import logging
 
-from datetime import datetime
-from fpdf import FPDF
-
-
-class Message:
-    """
-    A class used to represent a Message
-
-    Attributes
-    ----------
-    message : str
-        The Message Text or Image Link
-    sender : str
-        The sender id of the person who send the message
-    is_img: bool
-        Whether the message is an image or not
-    chatters: dict
-        A dict<id: name> to translate the given id to a name
-
-    Methods
-    -------
-    get_name()
-        return the translated name of the sender
-
-    get_msg()
-        returns the message content
-
-    is_img()
-        returns whether the message is image or not
-    """
-    def __init__(self, message: str, sender: str, is_img: bool, chatters: dict):
-        self.msg = message
-        self.sdr = sender
-        self.img = is_img
-        self.chr = chatters
-
-    def get_name(self):
-        return self.translate(self.sdr, self.chr)
-
-    def get_msg(self):
-        return self.msg
-
-    def is_img(self):
-        return self.img
-
-    @staticmethod
-    def translate(client: str, chatters: dict):
-        if client in chatters:
-            return chatters[client]
-        return client
+from utils.pdf_helper import create_pdf
+from utils.message import Message
 
 
 # Extract all Zip Files in given Path
@@ -170,46 +127,6 @@ def extract_json(content: list, chatters: dict):
         logging.info("Extracted {} messages".format(len(chat)))
         history.append(chat)
     return history
-
-
-# Sort the Messages dict by timestamp
-def sort_dict(content: dict):
-    return collections.OrderedDict(sorted(content.items()))
-
-
-def item_length(content: list):
-    ful = 0
-    for c in content:
-        ful = ful + len(c)
-    return ful
-
-
-# Create the pdf out of the extracted JSON Content
-def create_pdf(content: list, path: str):
-    count = 0
-    done = 0
-    full = item_length(content)
-    logging.info("Creating PDFs this may take up a while.")
-    for c in content:
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        c = sort_dict(c)
-        count2 = 0
-        for key, val in c.items():
-            pdf.cell(200, 10, txt="[{0}] {1}:".format(datetime.fromtimestamp(int(str(key)[:10])), val.get_name()), ln=1)
-            if val.is_img():
-                pdf.image(val.get_msg(), w=100, h=100)
-            else:
-                pdf.cell(200, 10, txt="{}".format(val.get_msg()), ln=1)
-            count2 = count2 + 1
-            logging.info("Wrote {0}/{1} lines".format(count2, len(c)))
-        done = done + count2
-        pdf.output(path + "/output_{}.pdf".format(count))
-        count = count + 1
-
-        logging.info("Wrote {0}/{1} PDF files \n{2}% Done".format(count, len(content), (done/full*100)))
-    return count
 
 
 # Main function to run our program
