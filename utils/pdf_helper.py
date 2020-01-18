@@ -1,12 +1,15 @@
-import logging
 import collections
+import utils.config as config
 
 from fpdf import FPDF
 from datetime import datetime
 from utils.message import Message
 
 old = None
+
+
 # Sort the Messages dict by timestamp
+
 def sort_dict(content: dict):
     return collections.OrderedDict(sorted(content.items()))
 
@@ -19,42 +22,59 @@ def item_length(content: list):
 
 
 def align_left(msg: Message, time: int, pdf: FPDF):
+    """
+    Writes the given text into the PDF file. Aligns text left.
+    :param msg: The Message Object for sender and text
+    :param time: Time stamp
+    :param pdf: The open PDF file
+    :return: Nothing
+    """
     global old
     text = "[{0}] {1}:".format(str(datetime.fromtimestamp(int(str(time)[:10])))[:16],
-                                                msg.get_name())
+                               msg.get_name())
     if old != text:
-        pdf.cell(200, 10, txt=text, ln=1, align='L')
+        pdf.set_font("Arial", size=config.FONT_CHATTER)
+        pdf.multi_cell(200, config.FONT_CHATTER, txt=text, align='L')
         old = text
-
+    pdf.set_font("Arial", size=config.FONT_SIZE)
     if msg.is_img():
-        print(text)
-        pdf.image(msg.get_msg(), w=100, h=100)
+        if 150 + pdf.get_y() > config.A4_HEIGHT:
+            pdf.add_page()
+        pdf.image(msg.get_msg(), w=config.WIDTH, h=config.HEIGHT)
     else:
-        pdf.cell(200, 10, txt="{}".format(msg.get_msg()), ln=1)
+        pdf.multi_cell(200, config.FONT_SIZE, txt="{}".format(msg.get_msg()))
 
 
 def align_right(msg: Message, time: int, pdf: FPDF):
+    """
+    Writes the given text into the PDF file. Aligns text right. Handles Image
+    :param msg: The Message Object for sender and text
+    :param time: Time stamp
+    :param pdf: The open PDF file
+    :return: Nothing
+    """
     global old
-    A4_HEIGHT = 297
-    A4_WIDTH = 210
 
     text = "[{0}] {1}:".format(str(datetime.fromtimestamp(int(str(time)[:10])))[:16],
-                                                msg.get_name())
+                               msg.get_name())
 
     if old != text:
-        pdf.cell(200, 10, txt=text, ln=1, align='R')
+        pdf.set_font("Arial", size=config.FONT_CHATTER)
+        pdf.multi_cell(200, config.FONT_CHATTER, txt=text, align='R')
         old = text
+    pdf.set_font("Arial", size=config.FONT_SIZE)
     if msg.is_img():
-        print(text)
-        pdf.image(msg.get_msg(), w=100, h=100, x=A4_WIDTH-100)
+        if 150 + pdf.get_y() > config.A4_HEIGHT:
+            pdf.add_page()
+        pdf.image(msg.get_msg(), w=config.WIDTH, h=config.HEIGHT, x=config.A4_WIDTH - 100)
     else:
-        pdf.cell(200, 10, txt="{}".format(msg.get_msg()), ln=1, align='R')
+        pdf.multi_cell(200, config.FONT_SIZE, txt="{}".format(msg.get_msg()), align='R')
 
 
 def title(chatter: dict, pdf: FPDF):
     c = filter_chatter(chatter)
-    pdf.set_font("Arial", size=24)
-    pdf.cell(200, 10, txt="Chat logs {0} {1}".format(c[0], c[1]), ln=1, align='C')
+    pdf.set_font("Arial", size=config.TITLE_FONT)
+    pdf.multi_cell(200, config.TITLE_FONT, txt="Chat logs {0} {1}".format(c[0], c[1]), align='C')
     return pdf
 
 
@@ -79,13 +99,16 @@ def create_pdf(content: list, path: str):
     old = ""
     changes = 1
     print("Creating PDFs this may take up a while.")
+    print("\n##########################################")
     for c in content:
         pdf = FPDF()
         pdf.add_page()
         title(c, pdf)
-        pdf.set_font("Arial", size=12)
+        pdf.set_font("Arial", size=config.FONT_SIZE)
         c = sort_dict(c)
         count2 = 0
+        print("Writing PDF Number {}".format(count+1))
+        print("-----------------------\n")
         for key, val in c.items():
             if old is not val.get_name():
                 old = val.get_name()
@@ -99,8 +122,8 @@ def create_pdf(content: list, path: str):
         done = done + count2
         pdf.output(path + "/output_{}.pdf".format(count))
         count = count + 1
-
-        print("Wrote {0}/{1} PDF files \n{2}% Done".format(count, len(content), (done/full*100)))
+        print("\n##########################################")
+        print("Wrote {0}/{1} PDF files \n{2}% Done\n".format(count, len(content), (done / full * 100)))
     return count
 
 

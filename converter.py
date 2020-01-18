@@ -30,8 +30,11 @@ import json
 import argparse
 import logging
 
+import utils.config as config
+
 from utils.pdf_helper import create_pdf
 from utils.message import Message
+from time import sleep
 
 
 # Extract all Zip Files in given Path
@@ -40,7 +43,7 @@ def extract_all(path: str):
         for f in files:
             path = os.path.join(d, f)
             if os.path.exists(path) and path.endswith(".zip"):  # check for ".zip" extension
-                logging.info("Found file {} extracting".format(path))
+                print("Found file {} extracting".format(path))
                 zip_ref = zipfile.ZipFile(path)  # create zipfile object
                 zip_ref.extractall(path.replace(".zip", ""))  # extract file to dir
                 zip_ref.close()  # close file
@@ -59,19 +62,17 @@ def read_json(path: str):
         logging.error("No Hangout files found please check if you have selected the right path and if Hangouts.json "
                       " are available files")
         exit(1)
-    logging.info("Found {} JSON Files".format(len(json_list)))
+    print("Found {} JSON Files".format(len(json_list)))
     return json_list
 
 
 # Check if the found name is right and offer to edit
 def check_names(name: str, id: str):
-    print("Found User {0} with ID {1}\nKeep? (yes/NO)".format(name, id))
-    choice = input()
+    choice = input("Found User {0} with ID {1}\nKeep? (Yes/No):".format(name, id))
     if "y" in choice.lower() or len(choice) == 0:
-        logging.info("Added {}".format(name))
+        print("Added {}".format(name))
         return name
-    print("Enter the name for ID {0}".format(id))
-    name = input()
+    name = input("Enter the name for ID {0}: ".format(id))
     return check_names(name, id)
 
 
@@ -98,13 +99,14 @@ def get_chatters(content: list):
                             continue
                         name = check_names(name, cid)
                         users.update({cid: name})
-    logging.info("Found {} participants.".format(len(users)))
+    print("Found {} participants.".format(len(users)))
     return users
 
 
 # Get the content out of the read in json files eg. Messages etc.
 def extract_json(content: list, chatters: dict):
     history = list()
+    count = 0
     for j in content:
         chat = dict()
         if "conversations" in j:
@@ -124,17 +126,32 @@ def extract_json(content: list, chatters: dict):
                                     timestamp = int(timestamp) + 1
                                     chat.update({timestamp: Message(a["embed_item"]["plus_photo"]["thumbnail"]
                                                                     ["image_url"], sender, True, chatters)})
-        logging.info("Extracted {} messages".format(len(chat)))
+        print("Extracted {} messages".format(len(chat)))
+        count = count + len(chat)
         history.append(chat)
+    print("Total of {} messages found!\n".format(count))
     return history
+
+
+def print_welcome():
+    print(config.WELCOME_TEXT)
+    sleep(5)
 
 
 # Main function to run our program
 def run(inp, out):
+    print_welcome()
+    print("\nExtracting Zip Files:\n")
     extract_all(inp)
     content = read_json(inp)
+    print("\nExtracting Users and Chatters:\n")
     chatters = get_chatters(content)
+    print("\nReading Content:\n")
     create_pdf(extract_json(content, chatters), out)
+    print("\n##########################################")
+    print("#      Finished creating PDF files.      #")
+    print("#        Check the Output folder.        #")
+    print("##########################################")
 
 
 if __name__ == "__main__":
@@ -142,5 +159,4 @@ if __name__ == "__main__":
     parser.add_argument('--input', nargs='?', const=1, type=str, default="input")
     parser.add_argument('--output', nargs='?', const=1, type=str, default="output")
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO)
     run(args.input, args.output)
