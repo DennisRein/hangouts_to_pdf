@@ -1,2 +1,4 @@
 fpdf
 pandas
+unicode
+Image

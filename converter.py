@@ -4,7 +4,7 @@
 3. Translate ID to Name
 3a. Get IDs Names somehow out of JSON File maybe with Input (Who's sender? Receiver can be read out of json)
 4. Read Events -> Chat Message => To Message Class (Name: str, Message: str, isImage: bool),
-4a. Name ID translated to name
+4a. Name ID translawted to name
 5. Save Message to Dic Timestamp: Message
 5a. Has Attachment? => isImage: true Message: Url; timestamp before +1,
 6. Write to PDF in Output, if isImage download image
@@ -55,8 +55,10 @@ def read_json(path: str):
     for (d, _, files) in os.walk(path):
         for f in files:
             path = os.path.join(d, f)
+            path = os.path.join(d, f)
             if os.path.exists(path) and "Hangouts.json" in path:
-                with open(path) as json_file:
+                with open(path, encoding='utf-8') as json_file:
+                    print(json_file)
                     json_list.append(json.load(json_file))
     if len(json_list) <= 0:
         logging.error("No Hangout files found please check if you have selected the right path and if Hangouts.json "
@@ -119,13 +121,14 @@ def extract_json(content: list, chatters: dict):
                             msg = e["chat_message"]["message_content"]
                             if "segment" in msg:
                                 for s in msg["segment"]:
-                                    timestamp = int(timestamp) + 1
-                                    chat.update({timestamp: Message(s["text"], sender, False, chatters)})
-                            if "attachment" in msg:
-                                for a in msg["attachment"]:
-                                    timestamp = int(timestamp) + 1
-                                    chat.update({timestamp: Message(a["embed_item"]["plus_photo"]["thumbnail"]
-                                                                    ["image_url"], sender, True, chatters)})
+                                    if "text" in s:
+                                        timestamp = int(timestamp) + 1
+                                        chat.update({timestamp: Message(s["text"], sender, False, chatters)})
+                            #if "attachment" in msg:
+                            #    for a in msg["attachment"]:
+                            #        timestamp = int(timestamp) + 1
+                            #        chat.update({timestamp: Message(a["embed_item"]["plus_photo"]["thumbnail"]
+                            #                                        ["image_url"], sender, True, chatters)})
         print("Extracted {} messages".format(len(chat)))
         count = count + len(chat)
         history.append(chat)
@@ -135,7 +138,7 @@ def extract_json(content: list, chatters: dict):
 
 def print_welcome():
     print(config.WELCOME_TEXT)
-    sleep(5)
+    sleep(2)
 
 
 # Main function to run our program
