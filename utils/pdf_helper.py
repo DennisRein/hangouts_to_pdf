@@ -1,9 +1,11 @@
 import collections
 import utils.config as config
 
+
 from fpdf import FPDF
 from datetime import datetime
 from utils.message import Message
+
 
 old = None
 
@@ -33,10 +35,10 @@ def align_left(msg: Message, time: int, pdf: FPDF):
     text = "[{0}] {1}:".format(str(datetime.fromtimestamp(int(str(time)[:10])))[:16],
                                msg.get_name())
     if old != text:
-        pdf.set_font("Arial", size=config.FONT_CHATTER)
+        pdf.set_font(config.FONT, size=config.FONT_CHATTER)
         pdf.multi_cell(200, config.FONT_CHATTER, txt=text, align='L')
         old = text
-    pdf.set_font("Arial", size=config.FONT_SIZE)
+    pdf.set_font(config.FONT, size=config.FONT_SIZE)
     if msg.is_img():
         if 150 + pdf.get_y() > config.A4_HEIGHT:
             pdf.add_page()
@@ -59,10 +61,10 @@ def align_right(msg: Message, time: int, pdf: FPDF):
                                msg.get_name())
 
     if old != text:
-        pdf.set_font("Arial", size=config.FONT_CHATTER)
+        pdf.set_font(config.FONT, size=config.FONT_CHATTER)
         pdf.multi_cell(200, config.FONT_CHATTER, txt=text, align='R')
         old = text
-    pdf.set_font("Arial", size=config.FONT_SIZE)
+    pdf.set_font(config.FONT, size=config.FONT_SIZE)
     if msg.is_img():
         if 150 + pdf.get_y() > config.A4_HEIGHT:
             pdf.add_page()
@@ -73,7 +75,7 @@ def align_right(msg: Message, time: int, pdf: FPDF):
 
 def title(chatter: dict, pdf: FPDF):
     c = filter_chatter(chatter)
-    pdf.set_font("Arial", size=config.TITLE_FONT)
+    pdf.set_font(config.FONT, size=config.TITLE_FONT)
     pdf.multi_cell(200, config.TITLE_FONT, txt="Chat logs {0} {1}".format(c[0], c[1]), align='C')
     return pdf
 
@@ -102,9 +104,13 @@ def create_pdf(content: list, path: str):
     print("\n##########################################")
     for c in content:
         pdf = FPDF()
+        #pdf.add_font(config.FONT, style="", fname=r"C:\Windows\Fonts\NotoSans-Regular.ttf", uni=True)
+        #pdf.add_font(config.FONT, style="B", fname=r"C:\Windows\Fonts\NotoSans-Bold.ttf", uni=True)
+        #pdf.add_font(config.FONT, style="I", fname=r"C:\Windows\Fonts\NotoSans-Italic.ttf", uni=True)
+        #pdf.add_font(config.FONT, style="BI", fname=r"C:\Windows\Fonts\NotoSans-BoldItalic.ttf", uni=True)
         pdf.add_page()
         title(c, pdf)
-        pdf.set_font("Arial", size=config.FONT_SIZE)
+        pdf.set_font(config.FONT, size=config.FONT_SIZE)
         c = sort_dict(c)
         count2 = 0
         print("Writing PDF Number {}".format(count+1))

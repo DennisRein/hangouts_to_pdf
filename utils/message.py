@@ -1,3 +1,6 @@
+import unicodedata
+
+
 class Message:
     """
     A class used to represent a Message
@@ -34,10 +37,13 @@ class Message:
         return self.translate(self.sdr, self.chr)
 
     def get_msg(self):
-        return self.msg
+        return self.unicode_normalize(self.msg)
 
     def is_img(self):
         return self.img
+
+    def unicode_normalize(self, msg: str):
+        return unicodedata.normalize('NFKD', msg).encode('ascii', 'ignore').decode("latin-1")
 
     @staticmethod
     def translate(client: str, chatters: dict):
