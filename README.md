@@ -1,3 +1,3 @@
 # hangouts_to_pdf
-This repository is a in python written hangouts back up file to pdf converter.
+Use this tool to convert from Google generated Chat archives "input/takeout-xyz-001.zip" to readable .pdf files.
 
